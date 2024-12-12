@@ -20,7 +20,7 @@ def detector_psd(detector_name):
 Files for sensitivity curves
 """
 
-detectors_list = ['CE-40', 'CE-20', 'ET-10-XYL', 'A#', 'A+', 'V+', 'K+', 'Voyager', 'ET', 'O3', 'O4']
+detectors_list = ['CE-40', 'CE-20', 'ET-10-XYL', 'A#', 'A+', 'V+', 'K+', 'Voyager', 'ET', 'O3-H1', 'O3-L1', 'O3-V1', 'O4']
 
 def get_filename(tec):
     if   tec == 'CE-40':
@@ -53,8 +53,14 @@ def get_filename(tec):
     elif tec == 'ET':
         filename = 'et_d.txt'
         asd = 1
-    elif tec == 'O3':
+    elif tec == 'O3-H1':
         filename = 'aligo_O3actual_H1.txt'
+        asd = 1
+    elif tec == 'O3-L1':
+        filename = 'aligo_O3actual_L1.txt'
+        asd = 1
+    elif tec == 'O3-V1':
+        filename = 'avirgo_O3actual.txt'
         asd = 1
     elif tec == 'O4':
         filename = 'aligo_O4high.txt'
