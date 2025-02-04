@@ -2,14 +2,14 @@
 
 #IMPORT
 import numpy as np
-from scipy.integrate import cumtrapz, trapz
+from scipy.integrate import cumulative_trapezoid as cumtrapz
 from tqdm import tqdm
 import time
 import scipy.stats as stats
 import h5py
 from lal import C_SI
 
-Clight = C_SI
+Clight = C_SI #2.997e8
 
 #PYTHON MODULES
 from spectral_sirens.utils.constants import *
@@ -26,7 +26,7 @@ dir_out = '../data_injections/'
 
 fmin = 10.
 based = 'ground'
-snr_th = 8.
+snr_th = 11.
 H0_fid = 70
 Om0_fid = 0.30
 Tobs_fid = 1
@@ -34,13 +34,14 @@ Tobs_fid = 1
 params = 'm1z_m2z_dL'
 
 #zmin_inj, zmax_inj = 1e-3, 15
-zmin_inj, zmax_inj = 1e-3, 2
+zmin_inj, zmax_inj = 1e-3, 10
 mmin_inj, mmax_inj = 4.98, 112.5
-alpha_inj, mzmin_inj, mzmax_inj = -3.78, mmin_inj, mmax_inj*(1+zmax_inj)
-sig_inj, mu_inj, f_peak_inj, deltaM_inj = 3.88, 32.27, 0.03, 4.8
+alpha_inj, mzmin_inj, mzmax_inj = -2, mmin_inj, mmax_inj*(1+zmax_inj)
+# sig_inj, mu_inj, f_peak_inj, deltaM_inj = 3.88, 32.27, 0.03, 4.8
+# zp_fid, alpha_z_fid, beta_fid = 2.47, 4.59, 2.86
 
-n_detections = int(1e3)
-n_sources = n_detections*200
+n_detections = int(1e5)
+n_sources = n_detections*500
 
 starttime = time.time()
 
@@ -48,7 +49,7 @@ starttime = time.time()
 #----
 #Detector frame primary mass
 m1zs = np.linspace(mzmin_inj,mzmax_inj,10000)
-cdf_m1z = cumtrapz(gwpop.powerlaw_peak_gwtc3(m1zs,mzmin_inj,mzmax_inj,alpha_inj,sig_inj,mu_inj,f_peak_inj,deltaM_inj),m1zs,initial=0.0)
+cdf_m1z = cumtrapz(utils.powerlaw(m1zs,mzmin_inj,mzmax_inj,alpha_inj),m1zs,initial=0.0)
 cdf_m1z = cdf_m1z / cdf_m1z[-1]
 #Redshift
 zs = np.linspace(zmin_inj,zmax_inj,10000)
@@ -69,7 +70,7 @@ z_mock_pop = utils.inverse_transf_sampling(cdf_z,zs,n_sources)
 dL_mock_pop = gwcosmo.dL_approx(z_mock_pop,H0_fid,Om0_fid) #Mpc
 
 ##Computing p_draw
-p_draw_m1z = gwpop.powerlaw_peak_gwtc3(m1z_mock_pop,mzmin_inj,mzmax_inj,alpha_inj,sig_inj,mu_inj,f_peak_inj,deltaM_inj)
+p_draw_m1z = utils.powerlaw(m1z_mock_pop,mzmin_inj,mzmax_inj,alpha_inj)
 p_draw_m2z = 1./(m1z_mock_pop-mzmin_inj)
 p_draw_z = gwcosmo.diff_comoving_volume_approx(z_mock_pop,H0_fid,Om0_fid)/(1+z_mock_pop)/norm_z
 Ez_i = gwcosmo.Ez_inv(z_mock_pop,H0_fid,Om0_fid)
