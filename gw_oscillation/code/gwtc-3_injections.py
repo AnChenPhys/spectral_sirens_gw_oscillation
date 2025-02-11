@@ -40,7 +40,7 @@ alpha_inj, mzmin_inj, mzmax_inj = -2, mmin_inj, mmax_inj*(1+zmax_inj)
 # sig_inj, mu_inj, f_peak_inj, deltaM_inj = 3.88, 32.27, 0.03, 4.8
 # zp_fid, alpha_z_fid, beta_fid = 2.47, 4.59, 2.86
 
-n_detections = int(1e5)
+n_detections = int(5e4)
 n_sources = n_detections*500
 
 starttime = time.time()
