@@ -27,21 +27,22 @@ dir_out = '../data_injections/'
 fmin = 10.
 based = 'ground'
 snr_th = 8.
-H0_fid = 70
-Om0_fid = 0.30
+H0_fid = 67.66
+Om0_fid = 0.30966
 Tobs_fid = 1
 
 params = 'm1z_m2z_dL'
 
 #zmin_inj, zmax_inj = 1e-3, 15
-zmin_inj, zmax_inj = 1e-3, 10
-mmin_inj, mmax_inj = 4.98, 112.5
-alpha_inj, mzmin_inj, mzmax_inj = -2, mmin_inj, mmax_inj*(1+zmax_inj)
+zmin_inj, zmax_inj = 1e-3, 20
+mmin_inj, mmax_inj = 1., 200.
+alpha_inj, mzmin_inj, mzmax_inj = -0.2, mmin_inj, mmax_inj*(1+zmax_inj)
+
 # sig_inj, mu_inj, f_peak_inj, deltaM_inj = 3.88, 32.27, 0.03, 4.8
 # zp_fid, alpha_z_fid, beta_fid = 2.47, 4.59, 2.86
 
-n_detections = int(1e6)
-n_sources = n_detections*70
+n_detections = int(1e2)
+n_sources = n_detections*50
 
 starttime = time.time()
 
