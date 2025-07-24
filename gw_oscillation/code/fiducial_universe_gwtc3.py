@@ -29,6 +29,6 @@ mu_m1_fid = 34.
 f_peak_fid = 1.4e-8 #this value depends on mmin_pl_fid and mmax_pl_fid
 
 #Mass ratio
-bq_fid = 0.9
+bq_fid = 1.1
 
 Tobs_fid = 1. #yr
