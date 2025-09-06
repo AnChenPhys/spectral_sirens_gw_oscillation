@@ -99,10 +99,10 @@ def logNdet_exp(m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,H0,Om0,r0,Tobs,zp,alpha_
 #Log likelihood
 #--------------
 @jit
-def log_lik(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,pdraw_mock_samples,m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,h0,Om0,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,alpha_z,zp,beta,r0=1.):
+def log_lik(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,pdraw_mock_samples,m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,h0,Om0,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,alpha_z,zp,beta,r0=1.,Tobs=1.):
     #Fixed rate
     #r0 = 1.0 # 10.**log10r0
-    Tobs = 1.
+    #Tobs = 1.
     #redefinition
     H0 = h0*100
     
@@ -116,10 +116,10 @@ def log_lik(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,pdraw_mock_samples
     loglik_E = logNdet_events(m1_mock,m2_mock,z_mock,p_draw_mock,H0,Om0,r0,Tobs,zp,alpha_z,beta,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,Nsamples)
 
     #Total rate normalization only needed when selection effects are neglected because then N does not cancel out (see notes in example notebook)
-    # zs_norm = jnp.linspace(0.01,10,1000) 
-    # dn_detec = jgwpop.rate_z(zs_norm,zp,alpha_z,beta)*jgwcosmo.diff_comoving_volume_approx(zs_norm,H0,Om0)/(1.+zs_norm)   
-    # norm_z = jax.scipy.integrate.trapezoid(dn_detec,zs_norm)
-    # loglik_E -= Nobs*jnp.log(norm_z)
+    #zs_norm = jnp.linspace(0.01,10,1000) 
+    #dn_detec = r0*jgwpop.rate_z(zs_norm,zp,alpha_z,beta)*jgwcosmo.diff_comoving_volume_approx(zs_norm,H0,Om0)/(1.+zs_norm)   
+    #norm_z = jax.scipy.integrate.trapezoid(dn_detec,zs_norm)
+    #loglik_E -= Nobs*jnp.log(norm_z)
     
     m1s_norm = jnp.linspace(mMin,mMax,1000)    
     norm_m1 = jax.scipy.integrate.trapezoid(jgwpop.powerlaw_peak_smooth(m1s_norm,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter),m1s_norm)

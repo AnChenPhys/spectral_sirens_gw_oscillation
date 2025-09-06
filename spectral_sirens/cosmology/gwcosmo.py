@@ -41,3 +41,25 @@ def detector_to_source_frame(m1z,m2z,dL,H0,Om0,zmin=1e-3,zmax=100):
     m1 = m1z / (1. + z)
     m2 = m2z / (1. + z)
     return m1, m2, z
+
+# GW oscillation
+def dGW_dL_oscillate(z, Theta_gL, alpha_phi):
+    tan2Theta_gL = np.tan(Theta_gL)**2
+
+    if np.size(z)>1:
+        Delta_phi = np.zeros(len(z))
+        for i,zi in enumerate(z):
+            zarr = np.linspace(0,zi,1000)
+            Delta_phi[i] = np.trapz(-alpha_phi/(1+zarr), zarr)
+        dGW_dL_ratio = 1/(np.cos(Theta_gL)**2 * np.sqrt(1+tan2Theta_gL**2+2*tan2Theta_gL*np.cos(Delta_phi)))
+
+    else:
+        zarr = np.linspace(0,z,1000)
+        Delta_phi = np.trapz(-alpha_phi/(1+zarr), zarr)
+        dGW_dL_ratio = 1/(np.cos(Theta_gL)**2 * np.sqrt(1+tan2Theta_gL**2+2*tan2Theta_gL*np.cos(Delta_phi)))
+
+    return dGW_dL_ratio
+
+def dGW_oscillate_approx(z,H0,Om0,Theta_gL,alpha_phi):
+    return dL_approx(z,H0,Om0)*dGW_dL_oscillate(z, Theta_gL, alpha_phi)
+
