@@ -184,23 +184,24 @@ def loguniform_sigmoid(x,high_edge,width,filt):
 ###GW oscillation
 #Merger rate likelihood
 #----------------------
-def log_Rz_osci(z,z_step,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10):
-    Theta1 = xp.heaviside(z_step-z,1)
-    Theta2 = xp.heaviside(2*z_step-z,1)*xp.heaviside(z-z_step,1) 
-    Theta3 = xp.heaviside(3*z_step-z,1)*xp.heaviside(z-2*z_step,1) 
-    Theta4 = xp.heaviside(4*z_step-z,1)*xp.heaviside(z-3*z_step,1) 
-    Theta5 = xp.heaviside(5*z_step-z,1)*xp.heaviside(z-4*z_step,1) 
-    Theta6 = xp.heaviside(6*z_step-z,1)*xp.heaviside(z-5*z_step,1) 
-    Theta7 = xp.heaviside(7*z_step-z,1)*xp.heaviside(z-6*z_step,1) 
-    Theta8 = xp.heaviside(8*z_step-z,1)*xp.heaviside(z-7*z_step,1) 
-    Theta9 = xp.heaviside(9*z_step-z,1)*xp.heaviside(z-8*z_step,1) 
-    Theta10 = xp.heaviside(10*z_step-z,1)*xp.heaviside(z-9*z_step,1) 
+def log_Rz_osci(z,z_step,alphaz0,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10):
+    Theta0 = xp.heaviside(z_step-z,1)
+    Theta1 = xp.heaviside(2*z_step-z,1)*xp.heaviside(z-z_step,1) 
+    Theta2 = xp.heaviside(3*z_step-z,1)*xp.heaviside(z-2*z_step,1) 
+    Theta3 = xp.heaviside(4*z_step-z,1)*xp.heaviside(z-3*z_step,1) 
+    Theta4 = xp.heaviside(5*z_step-z,1)*xp.heaviside(z-4*z_step,1) 
+    Theta5 = xp.heaviside(6*z_step-z,1)*xp.heaviside(z-5*z_step,1) 
+    Theta6 = xp.heaviside(7*z_step-z,1)*xp.heaviside(z-6*z_step,1) 
+    Theta7 = xp.heaviside(8*z_step-z,1)*xp.heaviside(z-7*z_step,1) 
+    Theta8 = xp.heaviside(9*z_step-z,1)*xp.heaviside(z-8*z_step,1) 
+    Theta9 = xp.heaviside(10*z_step-z,1)*xp.heaviside(z-9*z_step,1) 
+    Theta10 = xp.heaviside(z-10*z_step,1)
     # return alphaz1*xp.log1p(z)*Theta1 + alphaz2*xp.log1p(z)*Theta2 + alphaz3*xp.log1p(z)*Theta3 + alphaz4*xp.log1p(z)*Theta4 + alphaz5*xp.log1p(z)*Theta5 + alphaz6*xp.log1p(z)*Theta6 + alphaz7*xp.log1p(z)*Theta7 + alphaz8*xp.log1p(z)*Theta8 + alphaz9*xp.log1p(z)*Theta9 + alphaz10*xp.log1p(z)*Theta10
-    return alphaz1*Theta1 + alphaz2*Theta2 + alphaz3*Theta3 + alphaz4*Theta4 + alphaz5*Theta5 + alphaz6*Theta6 + alphaz7*Theta7 + alphaz8*Theta8 + alphaz9*Theta9 + alphaz10*Theta10
+    return xp.log(alphaz0*Theta0 + alphaz1*Theta1 + alphaz2*Theta2 + alphaz3*Theta3 + alphaz4*Theta4 + alphaz5*Theta5 + alphaz6*Theta6 + alphaz7*Theta7 + alphaz8*Theta8 + alphaz9*Theta9 + alphaz10*Theta10)
 
 #Expected number of events
 #-------------------------
-def logNdet_events_osci(m1,m2,z,p_draw,H0,Om0,Tobs,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,Nsamples,z_step,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10):
+def logNdet_events_osci(m1,m2,z,p_draw,H0,Om0,Tobs,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,Nsamples,z_step,alphaz0,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10):
     #input data (N,M): N detections x M samples
     
     log_pm1 = logpowerlaw_peak_smooth(m1,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter)
@@ -211,14 +212,14 @@ def logNdet_events_osci(m1,m2,z,p_draw,H0,Om0,Tobs,mMin,mMax,alpha,sig_m1,mu_m1,
     logJacobian_m1m2_m1q =  - jnp.log(m1)
     log_pm = log_pm1 + log_pq + logJacobian_m1z_m1 + logJacobian_m2z_m2 + logJacobian_m1m2_m1q
     logcosmo = log_cosmo(z,H0,Om0)
-    logRzs = log_Rz_osci(z,z_step,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10) + jnp.log(Tobs)
+    logRzs = log_Rz_osci(z,z_step,alphaz0,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10) + jnp.log(Tobs)
     log_dN = log_pm + logcosmo + logRzs - jnp.log(p_draw)    
     
     return jnp.sum(jax.scipy.special.logsumexp(log_dN,axis=1) - jnp.log(Nsamples))
 
 #Expected Ndet with injection sesitivity
 #---------------------------------------
-def logNdet_exp_osci(m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,H0,Om0,Tobs,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,z_step,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10):
+def logNdet_exp_osci(m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,H0,Om0,Tobs,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,z_step,alphaz0,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10):
     m1_inj, m2_inj, z_inj = jgwcosmo.detector_to_source_frame_approx(m1z_inj,m2z_inj,dL_inj,H0,Om0,zmin=1e-3,zmax=100)
     
     log_pm1 = logpowerlaw_peak_smooth(m1_inj,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter)
@@ -233,7 +234,7 @@ def logNdet_exp_osci(m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,H0,Om0,Tobs,mMin,mM
     log_pm = log_pm1 + log_pq - jnp.log(norm_m1) + logJacobian_m1z_m1 + logJacobian_m2z_m2 + logJacobian_m1m2_m1q
     
     logcosmo = log_cosmo_dL(z_inj,dL_inj,H0,Om0)
-    logRzs = log_Rz_osci(z_inj,z_step,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10) + jnp.log(Tobs)
+    logRzs = log_Rz_osci(z_inj,z_step,alphaz0,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10) + jnp.log(Tobs)
     log_dN = log_pm  + logcosmo + logRzs 
     
     #Expected number of detections
@@ -249,10 +250,10 @@ def logNdet_exp_osci(m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,H0,Om0,Tobs,mMin,mM
 #Log likelihood
 #--------------
 @jit
-def log_lik_osci(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,pdraw_mock_samples,m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,h0,Om0,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,z_step,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10):
+def log_lik_osci(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,pdraw_mock_samples,m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,h0,Om0,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,z_step,alphaz0,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10,Tobs=1.):
     #Fixed rate
     #r0 = 1.0 # 10.**log10r0
-    Tobs = 1.
+    #Tobs = 1.
     #redefinition
     H0 = h0*100
     
@@ -263,7 +264,7 @@ def log_lik_osci(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,pdraw_mock_sa
     
     #Log_lik Events
     p_draw_mock = pdraw_mock_samples
-    loglik_E = logNdet_events_osci(m1_mock,m2_mock,z_mock,p_draw_mock,H0,Om0,Tobs,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,Nsamples,z_step,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10)
+    loglik_E = logNdet_events_osci(m1_mock,m2_mock,z_mock,p_draw_mock,H0,Om0,Tobs,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,Nsamples,z_step,alphaz0,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10)
 
     #Total rate normalization only needed when selection effects are neglected because then N does not cancel out (see notes in example notebook)
     #zs_norm = jnp.linspace(0.01,10,1000) 
@@ -276,7 +277,9 @@ def log_lik_osci(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,pdraw_mock_sa
     loglik_E -= Nobs*jnp.log(norm_m1)
         
     #Selection effects
-    log_Ndet, Neff = logNdet_exp_osci(m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,H0,Om0,Tobs,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,z_step,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10)
-    loglik_N = -Nobs*log_Ndet
-        
+    log_Ndet, Neff = logNdet_exp_osci(m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,H0,Om0,Tobs,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter,bq,z_step,alphaz0,alphaz1,alphaz2,alphaz3,alphaz4,alphaz5,alphaz6,alphaz7,alphaz8,alphaz9,alphaz10)
+    #loglik_N = -Nobs*log_Ndet
+    #Full merger rate
+    loglik_N = -jnp.exp(log_Ndet)
+
     return loglik_N + loglik_E, Neff
