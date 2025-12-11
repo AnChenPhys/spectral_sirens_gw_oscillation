@@ -12,6 +12,15 @@ def powerlaw_peak(m1,mMin,mMax,alpha,sig_m1,mu_m1,f_peak):
     # Combined power-law and peak
     return (f_peak*p_m1_peak + (1.-f_peak)*p_m1_pl)
 
+def powerlaw_double_peak(m1,mMin,mMax,alpha,sig_m1_low,mu_m1_low,f_peak_low,sig_m1_high,mu_m1_high,f_peak):
+    # Define power-law and double peaks
+    p_m1_pl = jutils.powerlaw(m1,mMin,mMax,alpha)
+    p_m1_peak_low = jutils.gaussian(m1,mu_m1_low,sig_m1_low)
+    p_m1_peak_high = jutils.gaussian(m1,mu_m1_high,sig_m1_high)
+
+    # Combined power-law and double-peak
+    return (f_peak*f_peak_low*p_m1_peak_low + f_peak*(1-f_peak_low)*p_m1_peak_high + (1.-f_peak)*p_m1_pl)
+
 def powerlaw_peak_smooth(m1,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter):
     """
     Smoothed power-law + peak distribution
@@ -55,6 +64,18 @@ def powerlaw_peak_smooth(m1,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax
 
     # Apply filters to combined power-law and peak
     return plp*low_filter*high_filter
+
+def powerlaw_double_peak_smooth(m1,mMin,mMax,alpha,sig_m1_low,mu_m1_low,f_peak_low,sig_m1_high,mu_m1_high,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter):
+    # Powerlaw_double_peak
+    pldp = powerlaw_double_peak(m1,mMin,mMax,alpha,sig_m1_low,mu_m1_low,f_peak_low,sig_m1_high,mu_m1_high,f_peak)
+
+    # Compute low- and high-mass filters
+    low_filter = jutils.lowfilter(m1,mMin_filter,dmMin_filter)
+    high_filter = jutils.highfilter(m1,mMax_filter,dmMax_filter)
+
+    # Apply filters to combined power-law and peak
+    return pldp*low_filter*high_filter
+
 
 def powerlaw_peak_gwtc3(m1,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,deltaM):
     """
