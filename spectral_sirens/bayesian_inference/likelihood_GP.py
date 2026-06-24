@@ -36,11 +36,6 @@ def logpowerlaw_peak_smooth(m1,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,m
     # Apply filters to combined power-law and peak
     return xp.log(plp) + loghigh_filter + loglow_filter
 
-#Merger rate likelihood
-#----------------------
-def log_Rz(z,r0,zp,alpha,beta):
-    logc0 = xp.log1p((1. + zp)**(-alpha-beta))
-    return xp.log(r0) + logc0  + alpha*xp.log1p(z) - xp.log1p(xp.power((1.+z)/(1.+zp),(alpha+beta)))
 
 #Cosmological likelihood
 # ---------------------- 
@@ -114,72 +109,79 @@ class Frechet(Distribution):
 #Log likelihood
 #--------------
 # @jit
-def log_lik(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,pdraw_mock_samples,m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,PC_params=None):
+def log_lik(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,pdraw_mock_samples,m1z_inj,m2z_inj,dL_inj,p_draw_inj,Ndraw,Tobs,z_test,param_bound,PC_params=None):
     #Fixed rate
-    r0 = 1.0 # 10.**log10r0
+    # r0 = 1.0 # 10.**log10r0
     # Tobs = 1.
     #redefinition
-    H0 = H0_fid #numpyro.sample("H0",dist.Uniform(20,140)) #H0_fid
+    H0 = H0_fid
     Om0 = Om0_fid
-    bq = bq_fid
-    zp = zp_fid
-    alpha_z = alpha_z_fid #numpyro.sample("alpha_z",dist.Uniform(0,10)) #alpha_z_fid
-    beta = beta_fid
-    r0 = r0_fid
+    mMin_filter = numpyro.sample("mmin",dist.Uniform(param_bound['mmin_min'],param_bound['mmin_max']))
+    mMax_filter = numpyro.sample("mmax",dist.Uniform(param_bound['mmax_min'],param_bound['mmax_max']))
+    alpha = numpyro.sample("alpha",dist.Uniform(param_bound['alpha_min'], param_bound['alpha_max'])) #numpyro.sample("alpha",dist.Normal(0,5))
+    mu_m1 = numpyro.sample("mu_m1",dist.Uniform(param_bound['mu_min'], param_bound['mu_max']))
+    sig_m1 = numpyro.sample("sig_m1",dist.Uniform(param_bound['sigma_min'], param_bound['sigma_max']))
+    f_peak = f_peak_fid #numpyro.sample("f_peak",dist.Uniform(param_bound['f_peak_min'], param_bound['f_peak_max']))
+    bq = 0 #numpyro.sample("bq",dist.Normal(param_bound['bq_mean'],param_bound['bq_sigma'])) #when fitting m_2
+    mMin = mmin_pl_fid
+    mMax = mmax_pl_fid
+    dmMin_filter = dmMin_filter_fid
+    dmMax_filter = dmMax_filter_fid
 
     """ Non-parametric population inference """
-    mean = numpyro.sample("mean",dist.Normal(0,3)) #numpyro.deterministic("mean",0)
-    # sigma = numpyro.sample("sigma",dist.Uniform(0,5)) #numpyro.deterministic("sigma",2.5) 
+    mean = numpyro.sample("mean",dist.Normal(0,3))
+    # sigma = numpyro.deterministic("sigma",2.5)
     sigma = numpyro.sample("sigma",dist.Gamma(concentration=PC_params["conc"], rate=PC_params["lam_sigma"]))
-    # rho = numpyro.deterministic("rho",0.5) #numpyro.sample("rho",dist.Uniform(0,1))
-    rho = numpyro.sample("rho",Frechet(concentration=PC_params["concentration"],scale=PC_params["scale"]))
+    rho = numpyro.deterministic("rho",0.5)
+    # rho = numpyro.sample("rho",Frechet(concentration=PC_params["concentration"],scale=PC_params["scale"]))
     
     Nobs, Nsamples = jnp.shape(m1z_mock_samples)
     
     D_H = (Clight/1.0e3)  / H0 #Mpc
     m1_mock, m2_mock, z_mock = jgwcosmo.detector_to_source_frame_approx(m1z_mock_samples,m2z_mock_samples,dL_mock_samples,H0,Om0,zmin=1e-3,zmax=100)
 
-    TEST_M1S = jnp.linspace(1,150.,num=500)
-    logtestm1s = jnp.log(TEST_M1S)
-    kernel = sigma**2 * kernels.quasisep.Matern52(rho) # can change kernel type #kernels.ExpSquared(scale=0.5)
-    gp = GaussianProcess(kernel,logtestm1s,mean=mean,diag=0.001,#,solver=DirectSolver)#,
-                         solver=QuasisepSolver,assume_sorted=True)
-    log_rate_test = numpyro.sample("log_rate_test",gp.numpyro_dist())
-
     #Expected number of events
-    logm1source = jnp.log(m1_mock)
-    log_rate_m1s_data = jnp.interp(logm1source,logtestm1s,log_rate_test-logtestm1s,left=-jnp.inf,right=-jnp.inf)
+    log_pm1 = logpowerlaw_peak_smooth(m1_mock,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter)
     q = m2_mock/m1_mock
-    log_pq = 0 #logpowerlaw(q,0.,1.,bq)
+    log_pq = logpowerlaw(q,0.,1.,bq)
     logJacobian_m1z_m1 = - 1.0*jnp.log1p(z_mock)
     logJacobian_m2z_m2 = - 1.0*jnp.log1p(z_mock)
     logJacobian_m1m2_m1q =  - jnp.log(m1_mock)
-    log_pm = log_rate_m1s_data + log_pq + logJacobian_m1z_m1 + logJacobian_m2z_m2 + logJacobian_m1m2_m1q
-
+    log_pm = log_pm1 + log_pq + logJacobian_m1z_m1 + logJacobian_m2z_m2 + logJacobian_m1m2_m1q
     logcosmo = log_cosmo(z_mock,H0,Om0)
-    logRzs = log_Rz(z_mock,r0,zp,alpha_z,beta) #+ jnp.log(Tobs)    
+
+    # log_z_mock = jnp.log(z_mock)
+    # log_z_test = jnp.log(z_test)
+    kernel = sigma**2 * kernels.quasisep.Matern52(rho) # can change kernel type
+    gp = GaussianProcess(kernel,z_test,mean=mean,diag=0.001,solver=QuasisepSolver,assume_sorted=True)
+    log_rate_test = numpyro.sample("log_rate_test",gp.numpyro_dist())
+    log_rate_data = jnp.interp(z_mock,z_test,log_rate_test,left=-jnp.inf,right=-jnp.inf)
+
+    logRzs = log_rate_data + jnp.log(Tobs)
     log_dN = log_pm + logcosmo + logRzs - jnp.log(pdraw_mock_samples)    
     
     loglik_E = jnp.sum(jax.scipy.special.logsumexp(log_dN,axis=1) - jnp.log(Nsamples))
-    # m1s_norm = jnp.linspace(TEST_M1S[0],TEST_M1S[-1],1000)    
-    # norm_m1 = jax.scipy.integrate.trapezoid(log_rate_test,TEST_M1S)
-    # loglik_E -= Nobs*jnp.log(norm_m1)
-    
+    m1s_norm = jnp.linspace(mMin,mMax,1000)    
+    norm_m1 = jax.scipy.integrate.trapezoid(jgwpop.powerlaw_peak_smooth(m1s_norm,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter),m1s_norm)
+    loglik_E -= Nobs*jnp.log(norm_m1)
+        
     #Expected Ndet with injection sesitivity
     m1_inj, m2_inj, z_inj = jgwcosmo.detector_to_source_frame_approx(m1z_inj,m2z_inj,dL_inj,H0,Om0,zmin=1e-3,zmax=100)
     
-    logm1_injs = jnp.log(m1_inj)
-    log_rate_m1s_injs = jnp.interp(logm1_injs,logtestm1s,log_rate_test-logtestm1s,left=-jnp.inf,right=-jnp.inf)
+    log_pm1_inj = logpowerlaw_peak_smooth(m1_inj,mMin,mMax,alpha,sig_m1,mu_m1,f_peak,mMin_filter,mMax_filter,dmMin_filter,dmMax_filter)
     q_inj = m2_inj/m1_inj
-    log_pq_inj = 0 #logpowerlaw(q_inj,0.,1.,bq)
+    log_pq_inj = logpowerlaw(q_inj,0.,1.,bq)
     
     logJacobian_m1z_m1_inj = - 1.0*jnp.log1p(z_inj)
-    # logJacobian_m2z_m2_inj = - 1.0*jnp.log1p(z_inj)
-    # logJacobian_m1m2_m1q_inj =  - jnp.log(m1_inj)
-    log_pm_inj = log_rate_m1s_injs + log_pq_inj + logJacobian_m1z_m1_inj #+ logJacobian_m2z_m2_inj + logJacobian_m1m2_m1q_inj
-
+    logJacobian_m2z_m2_inj = - 1.0*jnp.log1p(z_inj)
+    logJacobian_m1m2_m1q_inj =  - jnp.log(m1_inj)
+    log_pm_inj = log_pm1_inj + log_pq_inj - jnp.log(norm_m1) + logJacobian_m1z_m1_inj + logJacobian_m2z_m2_inj + logJacobian_m1m2_m1q_inj
     logcosmo_inj = log_cosmo_dL(z_inj,dL_inj,H0,Om0)
-    logRzs_inj = log_Rz(z_inj,r0,zp,alpha_z,beta) #+ jnp.log(Tobs)
+
+    # log_z_inj = jnp.log(z_inj)
+    log_rate_inj = jnp.interp(z_inj,z_test,log_rate_test,left=-jnp.inf,right=-jnp.inf)
+
+    logRzs_inj = log_rate_inj + jnp.log(Tobs)
     log_dN_inj = log_pm_inj  + logcosmo_inj + logRzs_inj 
     
     #Expected number of detections
